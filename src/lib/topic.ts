@@ -128,7 +128,9 @@ const INTERROGATIVE_SPLIT = /[誰何幾孰]/;
 
 /** 1つの文字列トークンから、候補となる語のバリエーションを作る（先頭が本命） */
 function variantsOf(raw: string): string[] {
-  const base = raw.replace(/[ー・\-']+$/, '');
+  // 末尾の「ー」は削らない（ソニー→ソニ、コーヒー→コーヒ になってしまう）。
+  // 連続した長音や中黒だけを整える。
+  const base = raw.replace(/[・\-']+$/, '').replace(/ー{2,}$/, 'ー');
   const out: string[] = [];
   for (const piece of base.split(INTERROGATIVE_SPLIT)) {
     if (!piece) continue;

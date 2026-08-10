@@ -211,12 +211,19 @@ export async function fetchEntityFacts(
 
   for (const [pid, order] of PROP_ORDER) {
     if (pid === 'P625') continue; // 座標は収録中に読む情報ではない
-    const cs = (claims[pid] ?? []).filter(
+    const all = (claims[pid] ?? []).filter(
       (c) => c.rank !== 'deprecated' && c.mainsnak.snaktype === 'value',
     );
-    if (cs.length === 0) continue;
+    if (all.length === 0) continue;
+    // 優先ランクの値があればそれだけを使う（旧社名・旧本社などを混ぜない）
+    const preferred = all.filter((c) => c.rank === 'preferred');
+    const cs = preferred.length > 0 ? preferred : all;
+    // 日付・数値・文字列は複数並べても読みにくいだけなので1つに絞る
+    const firstType = cs[0].mainsnak.datavalue?.type;
+    const maxValues =
+      firstType && firstType !== 'wikibase-entityid' ? 1 : 3;
     const values: Raw['values'] = [];
-    for (const c of cs.slice(0, 3)) {
+    for (const c of cs.slice(0, maxValues)) {
       const dv = c.mainsnak.datavalue;
       if (!dv) continue;
       switch (dv.type) {
