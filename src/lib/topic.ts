@@ -9,6 +9,9 @@
  *   で「いま話している主題」を1語選ぶ。
  */
 
+/** トピック判定に使う会話の窓。長すぎると話題が切り替わっても古い語が勝ち続ける */
+export const TOPIC_WINDOW_MS = 30000;
+
 const KANJI = '\\u4E00-\\u9FFF\\u3005\\u3006\\u3007';
 const KATAKANA = '\\u30A1-\\u30FA\\u30FC\\u30FD\\u30FE';
 const LATIN = 'A-Za-z0-9';
@@ -42,6 +45,15 @@ const STOPWORDS = new Set<string>([
   'ハイ', 'ウン', 'エー', 'アー', 'ソウソウ', 'ナルホド', 'トカ', 'ケド', 'デス', 'マス',
   'ポッドキャスト', 'ラジオ', 'マイク', 'リスナー', 'コーナー',
   'OK', 'NG', 'the', 'The', 'a', 'an', 'and', 'is', 'it',
+  // 日常語（調べても「誰でも知っていること」しか出ないので話題にしない）
+  '自転車', '自動車', '電車', '新幹線', '飛行機', '自動販売機', '携帯', '電話', '電池', '電源',
+  '時計', '財布', '眼鏡', '椅子', '部屋', '会社', '学校', '病院', '駅前', '道路', '信号',
+  '料理', '野菜', '果物', '飲み物', '食べ物', '天気', '温泉', '旅行', '写真', '動画',
+  '音楽', '映画', '漫画', '小説', '雑誌', '新聞', '番組', '収録', '編集', '仕事', '趣味',
+  'カメラ', 'パソコン', 'スマホ', 'スマートフォン', 'ヘッドフォン', 'ヘッドホン', 'イヤホン',
+  'ケーブル', 'ボタン', 'データ', 'ファイル', 'メニュー', 'ページ', 'サイズ', 'カラー',
+  'デザイン', 'スピード', 'パワー', 'レベル', 'タイプ', 'ケース', 'チェック', 'スタート',
+  'ストップ', 'プラットホーム', 'テーブル', 'ソファ', 'ベッド', 'エアコン', 'コーヒー',
 ]);
 
 /** 数量・日付そのもの（トピックではなく Fact 側の情報） */
@@ -52,6 +64,8 @@ export interface Candidate {
   score: number;
   /** 最後に出現した時刻(ms) */
   lastAt: number;
+  /** 何回出てきたか（1回だけの語は音声認識の誤りが多い） */
+  count: number;
 }
 
 export interface WindowedText {
@@ -161,7 +175,7 @@ export function detectQuestion(text: string): string | null {
 export function extractCandidates(
   items: WindowedText[],
   now: number = Date.now(),
-  windowMs = 45000,
+  windowMs = TOPIC_WINDOW_MS,
 ): Candidate[] {
   const scores = new Map<string, Candidate>();
   const recent = items.filter((it) => now - it.ts <= windowMs);
@@ -172,8 +186,8 @@ export function extractCandidates(
 
   for (const item of recent) {
     const age = Math.max(0, now - item.ts);
-    // 新しさ: 直近5秒は 1.0、45秒前で 0.25 くらいに落ちる
-    const recency = 0.25 + 0.75 * Math.exp(-age / 18000);
+    // 新しさ: いま話している語を強く優先する（10秒前で約1/3、30秒前でほぼ無視）
+    const recency = 0.05 + 0.95 * Math.exp(-age / 9000);
     // 認識途中の文字列は確度が低いので少し割り引く
     const confidence = item.final ? 1.0 : 0.75;
 
@@ -201,9 +215,10 @@ export function extractCandidates(
         const cur = scores.get(t);
         if (cur) {
           cur.score += add;
+          cur.count += 1;
           cur.lastAt = Math.max(cur.lastAt, item.ts);
         } else {
-          scores.set(t, { term: t, score: add, lastAt: item.ts });
+          scores.set(t, { term: t, score: add, lastAt: item.ts, count: 1 });
         }
       }
     }
@@ -234,7 +249,7 @@ export function guessTopic(items: WindowedText[], now = Date.now()): TopicGuess 
   const candidates = extractCandidates(items, now);
   if (candidates.length === 0) return null;
   const text = items
-    .filter((it) => now - it.ts <= 45000)
+    .filter((it) => now - it.ts <= TOPIC_WINDOW_MS)
     .map((r) => r.text)
     .join('。');
   return { term: candidates[0].term, question: detectQuestion(text), candidates };

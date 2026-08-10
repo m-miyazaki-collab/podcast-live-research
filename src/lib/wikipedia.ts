@@ -146,6 +146,21 @@ export async function fetchRelated(
   return merged;
 }
 
+/**
+ * 検索フォールバックで拾った記事が、本当にその語の記事かを確かめる。
+ *
+ * Wikipedia検索は何かしら返してしまうため、これが無いと
+ * 「ホームランバッター」→「本塁打」、「大谷翔平のバット」→「指名打者」のような
+ * 話していない記事が表示される。タイトルか本文冒頭に語が出ることを条件にする。
+ */
+function isSameSubject(term: string, s: WikiSummary): boolean {
+  const title = s.title.replace(/\s*\(.+\)$/, ''); // 「バット (野球)」の括弧を外す
+  // 部分一致だけでは「パッド」→「クックパッド」を通してしまうので、
+  // 語とタイトルの長さがほぼ同じ（＝送り仮名や表記ゆれ程度の差）ことを条件にする
+  const ratio = Math.min(term.length, title.length) / Math.max(term.length, title.length);
+  return (title.includes(term) || term.includes(title)) && ratio >= 0.6;
+}
+
 /** 曖昧さ回避ページに当たったときの回避も含めて、語から記事を1本決める */
 export async function resolveArticle(
   term: string,
@@ -160,11 +175,11 @@ export async function resolveArticle(
   }
   if (summary && summary.type === 'standard' && summary.extract) return summary;
 
-  // ダメなら検索にフォールバック
+  // ダメなら検索にフォールバック（ただし別物を掴まないよう確認する）
   const titles = await searchTitles(term, signal);
   for (const t of titles.slice(0, 3)) {
     const s = await fetchSummary(t, signal);
-    if (s && s.type === 'standard' && s.extract) return s;
+    if (s && s.type === 'standard' && s.extract && isSameSubject(term, s)) return s;
   }
   return null;
 }

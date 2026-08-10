@@ -14,11 +14,14 @@ import { guessTopic, type WindowedText } from '../lib/topic';
 const STABLE_MS = 1800;
 const STABLE_MS_FINAL = 900;
 const TICK_MS = 400;
+/** 一度きりの短い語を弾く下限スコア（4文字の語を1回=2.0、2文字の語を1回=1.0 程度） */
+const MIN_SCORE = 1.2;
 
 interface Options {
   items: WindowedText[];
   active: boolean;
-  onTopic: (term: string) => void;
+  /** 確定した主題と、次点以降の候補（主題が「調べる価値なし」だったときの代替） */
+  onTopic: (term: string, alternatives: string[]) => void;
 }
 
 export interface TrackerState {
@@ -53,6 +56,9 @@ export function useTopicTracker({ items, active, onTopic }: Options): TrackerSta
       const guess = guessTopic(itemsRef.current, now);
       if (!guess) return;
 
+      // スコアが低い＝一度きりの短い語。音声認識の誤りが多いので相手にしない
+      if (guess.candidates[0].score < MIN_SCORE) return;
+
       const term = guess.term;
       if (pendingRef.current?.term !== term) {
         pendingRef.current = { term, since: now };
@@ -73,7 +79,10 @@ export function useTopicTracker({ items, active, onTopic }: Options): TrackerSta
 
       if (heldFor >= needed && committedRef.current !== term) {
         committedRef.current = term;
-        onTopicRef.current(term);
+        onTopicRef.current(
+          term,
+          guess.candidates.map((c) => c.term).slice(0, 4),
+        );
       }
     }, TICK_MS);
     return () => window.clearInterval(id);

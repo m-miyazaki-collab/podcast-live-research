@@ -30,6 +30,12 @@ export interface TopicCard {
   fetchedAt: number;
 }
 
+/** RECENT の1件。at = 最後に画面に出した時刻（取得時刻ではない） */
+export interface RecentEntry {
+  card: TopicCard;
+  at: number;
+}
+
 export type ResearchState =
   | { status: 'idle' }
   | { status: 'loading'; query: string }

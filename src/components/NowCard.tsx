@@ -1,3 +1,4 @@
+import { findAnswer } from '../lib/answer';
 import type { ResearchState } from '../types';
 
 interface Props {
@@ -23,11 +24,11 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
   }
 
   if (state.status === 'loading') {
+    // 確定した情報ではないので、大見出しにはしない（誤検出をそれらしく見せない）
     return (
       <section className="panel now">
         <div className="panel-title">NOW</div>
-        <h2 className="now-title">{state.query}</h2>
-        <p className="loading-text">検索中…</p>
+        <p className="loading-text">「{state.query}」を検索中…</p>
       </section>
     );
   }
@@ -56,6 +57,8 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
   }
 
   const { card } = state;
+  // 質問に対応する事実があれば、それを答えとして最上段に出す
+  const answer = findAnswer(question, card.facts);
   return (
     <section className="panel now">
       <div className="panel-title">
@@ -66,6 +69,13 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
       <h2 className="now-title">{card.title}</h2>
       {card.description && <div className="now-desc">{card.description}</div>}
 
+      {answer && (
+        <div className="answer">
+          <span className="answer-label">{answer.fact.label}</span>
+          <span className="answer-value">{answer.fact.value}</span>
+        </div>
+      )}
+
       <p className="now-summary">{card.summary}</p>
 
       {card.facts.length > 0 && (
@@ -73,7 +83,15 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
           {card.facts.map((f) => (
             <div className="fact" key={f.label + f.value}>
               <dt>{f.label}</dt>
-              <dd>{f.value}</dd>
+              <dd>
+                {/^https?:\/\//.test(f.value) ? (
+                  <a href={f.value} target="_blank" rel="noreferrer">
+                    {f.value.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </a>
+                ) : (
+                  f.value
+                )}
+              </dd>
             </div>
           ))}
         </dl>

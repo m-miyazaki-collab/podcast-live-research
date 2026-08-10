@@ -1,4 +1,4 @@
-import type { TopicCard, TranscriptChunk } from '../types';
+import type { RecentEntry, TopicCard, TranscriptChunk } from '../types';
 
 export function RelatedList({
   items,
@@ -30,7 +30,7 @@ export function RecentList({
   activeTitle,
   onOpen,
 }: {
-  items: TopicCard[];
+  items: RecentEntry[];
   activeTitle: string | null;
   onOpen: (card: TopicCard) => void;
 }) {
@@ -41,15 +41,15 @@ export function RecentList({
         <p className="empty-text small">—</p>
       ) : (
         <ul className="recent-list">
-          {items.map((c) => (
-            <li key={c.title}>
+          {items.map((e) => (
+            <li key={e.card.title}>
               <button
-                className={`recent-item${c.title === activeTitle ? ' active' : ''}`}
-                onClick={() => onOpen(c)}
+                className={`recent-item${e.card.title === activeTitle ? ' active' : ''}`}
+                onClick={() => onOpen(e.card)}
               >
-                <span className="recent-title">{c.title}</span>
+                <span className="recent-title">{e.card.title}</span>
                 <span className="recent-time">
-                  {new Date(c.fetchedAt).toLocaleTimeString('ja-JP', {
+                  {new Date(e.at).toLocaleTimeString('ja-JP', {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}

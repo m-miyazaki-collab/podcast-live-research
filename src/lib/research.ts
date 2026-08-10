@@ -30,13 +30,33 @@ export function isKnownMiss(query: string): boolean {
   return cacheGet<boolean>(missKey(query), MISS_TTL) === true;
 }
 
-export async function researchTopic(
-  query: string,
-  signal?: AbortSignal,
-): Promise<TopicCard> {
-  const cached = getCachedCard(query);
-  if (cached) return cached;
+/** 「記事はあるが中身が薄い（一般名詞）」も覚えておき、二度と自動検索しない */
+const thinKey = (q: string) => `thin:${q}`;
 
+export function markThin(query: string): void {
+  cacheSet(thinKey(query), true);
+}
+
+export function isThin(query: string): boolean {
+  return cacheGet<boolean>(thinKey(query), CARD_TTL) === true;
+}
+
+/** 同じ語のリクエストが同時に走らないようにする */
+const inflight = new Map<string, Promise<TopicCard>>();
+
+export function researchTopic(query: string, signal?: AbortSignal): Promise<TopicCard> {
+  const cached = getCachedCard(query);
+  if (cached) return Promise.resolve(cached);
+
+  const running = inflight.get(query);
+  if (running) return running;
+
+  const p = fetchTopic(query, signal).finally(() => inflight.delete(query));
+  inflight.set(query, p);
+  return p;
+}
+
+async function fetchTopic(query: string, signal?: AbortSignal): Promise<TopicCard> {
   const article = await resolveArticle(query, signal);
   if (!article) {
     cacheSet(missKey(query), true);
@@ -77,7 +97,22 @@ export async function researchTopic(
   return card;
 }
 
-/** 収録中に一瞬で読める長さに切る（3文 or 160文字まで） */
+/**
+ * 自動検出のトピックとして「出す価値があるか」の判定。
+ *
+ * 「自転車」「ヘッドフォン」のような一般名詞の記事は、Wikidataに
+ * 生年・設立・所在地・作者といった固有の事実をほとんど持たない。
+ * 逆に人物・企業・建造物・作品・出来事は必ず複数持つ。
+ * この差を使って「誰でも知っていること」を自動表示から外す。
+ *
+ * ユーザーが自分でタップした場合はこの判定を通さない（見たいものを見せる）。
+ */
+export function isSubstantial(card: TopicCard): boolean {
+  const identityFacts = card.facts.filter((f) => f.label !== '分類');
+  return identityFacts.length >= 2;
+}
+
+/** 収録中に一瞬で読める長さに切る（4文 or 300文字まで） */
 function trimSummary(extract: string): string {
   // 古いSafariでも壊れないよう、正規表現の後読みは使わずに文を切り出す
   const text = extract.replace(/\s+/g, ' ').trim();
@@ -95,10 +130,10 @@ function trimSummary(extract: string): string {
   let out = '';
   let count = 0;
   for (const s of sentences) {
-    if (out.length > 0 && out.length + s.length > 160) break;
+    if (out.length > 0 && out.length + s.length > 300) break;
     out += s;
     count += 1;
-    if (count >= 3) break;
+    if (count >= 4) break;
   }
-  return out || text.slice(0, 160);
+  return out || text.slice(0, 300);
 }

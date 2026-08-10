@@ -292,6 +292,30 @@ select {
   margin-bottom: 12px;
 }
 
+/* 質問に対する答え（Wikidataの事実をそのまま出す。文章生成はしない） */
+.answer {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 14px 0 6px;
+  padding: 12px 16px;
+  background: #14261d;
+  border: 1px solid var(--accent-dim);
+  border-left: 5px solid var(--accent);
+  border-radius: 6px;
+}
+.answer-label {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+.answer-value {
+  font-size: clamp(24px, 3vw, 40px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 .now-summary {
   font-size: clamp(19px, 2.1vw, 27px);
   line-height: 1.6;
@@ -329,6 +353,11 @@ select {
   font-size: 21px;
   font-weight: 700;
   word-break: break-word;
+}
+.fact dd a {
+  color: #7fb2ff;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .now-actions {
