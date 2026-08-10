@@ -43,18 +43,11 @@ npm install
 npm run dev
 ```
 
-iPad から開くときは、同じ Wi-Fi 上で Mac の IP を使ってアクセスします
-（`vite.config.ts` で `server.host: true` にしてあります）。
+開発中は Mac の `http://localhost:5173` で確認します。
 
-```bash
-npm run dev -- --host
-```
-
-→ iPad Safari で `http://<MacのIP>:5173` を開く。
-
-> **注意**: iPadOS Safari では **https または localhost 以外だとマイクが使えません**。
-> LAN の `http://192.168.x.x:5173` では音声認識が動かない場合があります。
-> 実機テストは後述のデプロイ（https）で行うのが確実です。
+> **注意**: iPadOS / iOS Safari は **https か localhost でないとマイクを許可しません**。
+> 同じWi-Fiの `http://192.168.x.x:5173` では音声認識が動きません。
+> iPad / iPhone で試すときは次章の公開URLを使ってください。
 
 ビルド:
 
@@ -65,18 +58,40 @@ npm run preview
 
 ---
 
-## 3. デプロイ（無料枠）
+## 3. 公開URL（iPad / iPhone で使う）
+
+**https://m-miyazaki-collab.github.io/podcast-live-research/**
+
+iPad / iPhone の **Safari** でこのURLを開けばそのまま使えます。
+
+### 使い方（iPad / iPhone）
+
+1. Safari で上のURLを開く
+2. `収録開始 / START` をタップ
+3. 「"m-miyazaki-collab.github.io"がマイクの使用を求めています」→ **許可**
+   - 初回は「許可」→ さらに音声認識の利用確認が出ることがあります
+4. ヘッダーが `● LISTENING`（緑）になれば認識中。あとは普通に話すだけ
+5. 終わったら `STOP`
+
+### ホーム画面に追加（アプリのように使う）
+
+Safari の共有ボタン → **ホーム画面に追加** → 開くと全画面で起動します（`manifest.webmanifest` 同梱）。
+アドレスバーが消えるぶん画面を広く使えます。
+
+### 更新のしかた
+
+```bash
+npm run deploy    # ビルドして gh-pages ブランチに反映（1〜2分で公開URLに反映）
+```
+
+### 他の無料ホスティングに置く場合
 
 `vite.config.ts` の `base: './'` により、どのサブパスに置いても動きます。
 
-| ホスティング | 手順 |
+| ホスティング | 設定 |
 | --- | --- |
-| **GitHub Pages** | このリポジトリを push すると `.github/workflows/deploy.yml` が `dist/` を自動デプロイ（Settings → Pages → Source を "GitHub Actions" に） |
 | **Cloudflare Pages** | Build command: `npm run build` / Output directory: `dist` |
-| **Vercel** | フレームワークプリセット `Vite` のまま。Build: `npm run build` / Output: `dist` |
-
-いずれも https で配信されるので、iPad Safari のマイク許可が通ります。
-**ホーム画面に追加** すると全画面のアプリのように起動できます（`manifest.webmanifest` 同梱）。
+| **Vercel** | プリセット `Vite` のまま。Build: `npm run build` / Output: `dist` |
 
 ---
 
