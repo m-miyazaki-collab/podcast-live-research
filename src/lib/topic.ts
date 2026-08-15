@@ -11,6 +11,8 @@
 
 /** トピック判定に使う会話の窓。長すぎると話題が切り替わっても古い語が勝ち続ける */
 export const TOPIC_WINDOW_MS = 30000;
+/** 質問はもっと短命。話題が移ったら消える */
+export const QUESTION_WINDOW_MS = 15000;
 
 const KANJI = '\\u4E00-\\u9FFF\\u3005\\u3006\\u3007';
 const KATAKANA = '\\u30A1-\\u30FA\\u30FC\\u30FD\\u30FE';
@@ -250,8 +252,9 @@ export interface TopicGuess {
 export function guessTopic(items: WindowedText[], now = Date.now()): TopicGuess | null {
   const candidates = extractCandidates(items, now);
   if (candidates.length === 0) return null;
+  // 質問は「いま聞かれたこと」だけを拾う（30秒前の質問が残り続けないように）
   const text = items
-    .filter((it) => now - it.ts <= TOPIC_WINDOW_MS)
+    .filter((it) => now - it.ts <= QUESTION_WINDOW_MS)
     .map((r) => r.text)
     .join('。');
   return { term: candidates[0].term, question: detectQuestion(text), candidates };

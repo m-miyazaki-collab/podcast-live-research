@@ -57,13 +57,19 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
   }
 
   const { card } = state;
+  // 別の話題の質問に引きずられないよう、いま出しているカードについての質問だけ扱う
+  // （「名古屋城って誰が作った？」が残ったまま大谷翔平のカードで「父」を出す事故を防ぐ）
+  const ownQuestion =
+    question && (question.includes(card.query) || question.includes(card.title))
+      ? question
+      : null;
   // 質問に対応する事実があれば、それを答えとして最上段に出す
-  const answer = findAnswer(question, card.facts);
+  const answer = findAnswer(ownQuestion, card.facts);
   return (
     <section className="panel now">
       <div className="panel-title">
         NOW
-        {question && <span className="question-chip">Q: {question}</span>}
+        {ownQuestion && <span className="question-chip">Q: {ownQuestion}</span>}
       </div>
 
       <h2 className="now-title">{card.title}</h2>
