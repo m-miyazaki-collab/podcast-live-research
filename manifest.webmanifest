@@ -1,0 +1,11 @@
+{
+  "name": "Podcast Live Research",
+  "short_name": "LIVE RESEARCH",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b0e11",
+  "theme_color": "#0b0e11",
+  "icons": []
+}
