@@ -316,6 +316,46 @@ select {
   line-height: 1.2;
 }
 
+/* 概要 + 画像。横幅が取れるときは画像を右に置く */
+.now-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 760px) {
+  .now-lead {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 40%);
+  }
+}
+
+.now-figure {
+  margin: 0;
+  /* 縦画面では文章より先に見えたほうが理解が早い */
+  order: -1;
+}
+@media (min-width: 760px) {
+  .now-figure {
+    order: 0;
+  }
+}
+.now-figure img {
+  display: block;
+  width: 100%;
+  max-height: 38vh;
+  object-fit: contain;
+  background: #0b1015;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.now-figure figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
 .now-summary {
   font-size: clamp(19px, 2.1vw, 27px);
   line-height: 1.6;
@@ -335,9 +375,9 @@ select {
 
 .facts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 8px 20px;
-  margin: 0 0 18px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px 20px;
+  margin: 16px 0 18px;
 }
 .fact {
   border-left: 3px solid var(--accent-dim);
@@ -445,7 +485,21 @@ select {
   border-left-color: var(--accent);
   background: #16222a;
 }
+.recent-thumb {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #0b1015;
+  border: 1px solid var(--line);
+}
+.recent-thumb-empty {
+  display: inline-block;
+  opacity: 0.35;
+}
 .recent-title {
+  flex: 1 1 auto;
   font-size: 20px;
   font-weight: 700;
   overflow: hidden;

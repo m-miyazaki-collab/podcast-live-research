@@ -5,7 +5,6 @@
  */
 
 const ACTION_API = 'https://ja.wikipedia.org/w/api.php';
-const REST = 'https://ja.wikipedia.org/api/rest_v1';
 
 async function actionApi<T>(params: Record<string, string>, signal?: AbortSignal): Promise<T> {
   const qs = new URLSearchParams({
@@ -24,6 +23,7 @@ export interface WikiSummary {
   description?: string;
   extract: string;
   type: string;
+  /** カードに載せる画像（遠くからでも見える大きさに拡大したURL） */
   thumbnail?: string;
   pageUrl: string;
   wikibaseItem?: string;
@@ -42,35 +42,55 @@ export async function searchTitles(term: string, signal?: AbortSignal): Promise<
   return (data.query?.search ?? []).map((s) => s.title);
 }
 
-interface RestSummary {
+interface QueryPage {
   title: string;
-  displaytitle?: string;
-  description?: string;
+  missing?: boolean;
   extract?: string;
-  type?: string;
-  thumbnail?: { source: string };
-  content_urls?: { desktop?: { page?: string } };
-  wikibase_item?: string;
+  fullurl?: string;
+  thumbnail?: { source: string; width: number; height: number };
+  pageprops?: { wikibase_item?: string; disambiguation?: string };
 }
 
+interface PageQueryResponse {
+  query?: { pages?: QueryPage[] };
+}
+
+/** iPadで遠目に見る前提なので、標準のサムネイル(約320px)より大きめを要求する */
+const CARD_IMAGE_WIDTH = 600;
+
+/**
+ * 記事の概要・画像・Wikidata項目を1リクエストでまとめて取る。
+ *
+ * REST の summary でも取れるが、返ってくるサムネイルは 320px 前後で
+ * URLの幅を書き換えると 400 になる（Wikimedia側で生成済みの幅しか配信されない）。
+ * Action API の pithumbsize なら指定した幅の画像を生成して返してくれるので、
+ * iPadで遠目に見ても潰れない大きさの画像が確実に手に入る。
+ */
 export async function fetchSummary(title: string, signal?: AbortSignal): Promise<WikiSummary | null> {
-  const res = await fetch(`${REST}/page/summary/${encodeURIComponent(title)}?redirect=true`, {
+  const data = await actionApi<PageQueryResponse>(
+    {
+      action: 'query',
+      titles: title,
+      redirects: '1',
+      prop: 'extracts|pageimages|pageprops|info',
+      exintro: '1',
+      explaintext: '1',
+      piprop: 'thumbnail',
+      pithumbsize: String(CARD_IMAGE_WIDTH),
+      ppprop: 'wikibase_item|disambiguation',
+      inprop: 'url',
+    },
     signal,
-    headers: { Accept: 'application/json' },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Wikipedia summary ${res.status}`);
-  const d = (await res.json()) as RestSummary;
+  );
+  const page = data.query?.pages?.[0];
+  if (!page || page.missing) return null;
   return {
-    title: d.title,
-    description: d.description,
-    extract: d.extract ?? '',
-    type: d.type ?? 'standard',
-    thumbnail: d.thumbnail?.source,
-    pageUrl:
-      d.content_urls?.desktop?.page ??
-      `https://ja.wikipedia.org/wiki/${encodeURIComponent(d.title)}`,
-    wikibaseItem: d.wikibase_item,
+    title: page.title,
+    extract: (page.extract ?? '').trim(),
+    type: page.pageprops?.disambiguation !== undefined ? 'disambiguation' : 'standard',
+    thumbnail: page.thumbnail?.source,
+    pageUrl: page.fullurl ?? `https://ja.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
+    wikibaseItem: page.pageprops?.wikibase_item,
   };
 }
 

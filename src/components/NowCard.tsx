@@ -76,7 +76,20 @@ export function NowCard({ state, question, aiEnabled, onAskAi, onRetry }: Props)
         </div>
       )}
 
-      <p className="now-summary">{card.summary}</p>
+      {/* 概要と画像を横並びに。画像は「一瞬見て何の話かわかる」ための主役のひとつ */}
+      <div className="now-lead">
+        <p className="now-summary">{card.summary}</p>
+
+        {card.thumbnail && (
+          <figure className="now-figure">
+            {/* 画像はWikipedia/Wikimedia Commonsのもの。タップで元ページを開く */}
+            <a href={card.wikipediaUrl} target="_blank" rel="noreferrer">
+              <img src={card.thumbnail} alt={card.title} loading="lazy" decoding="async" />
+            </a>
+            <figcaption>画像: Wikimedia Commons</figcaption>
+          </figure>
+        )}
+      </div>
 
       {card.facts.length > 0 && (
         <dl className="facts">

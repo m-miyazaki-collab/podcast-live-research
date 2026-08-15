@@ -47,6 +47,11 @@ export function RecentList({
                 className={`recent-item${e.card.title === activeTitle ? ' active' : ''}`}
                 onClick={() => onOpen(e.card)}
               >
+                {e.card.thumbnail ? (
+                  <img className="recent-thumb" src={e.card.thumbnail} alt="" loading="lazy" />
+                ) : (
+                  <span className="recent-thumb recent-thumb-empty" />
+                )}
                 <span className="recent-title">{e.card.title}</span>
                 <span className="recent-time">
                   {new Date(e.at).toLocaleTimeString('ja-JP', {
