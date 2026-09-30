@@ -4,6 +4,8 @@
 
 - リポジトリのルートで `git rev-parse --show-toplevel`、`git branch --show-current`、`git status --short` を確認する。共有ブランチは `main`。
 - GitHub の `origin` を共有ソースとし、作業前に `git fetch origin` 後 `git rev-list --left-right --count origin/main...HEAD` で同期状態を確認する。予期しない差分は統合せず報告する。
+- 判断前に反証と正本を確認し、実データを観測してから変更する。人手を求める前に利用可能な API・CLI・UI を試す。
+- 2件以上の修正または複数ファイル変更の後は、元の依頼・差分・検証結果を独立した第三者 AI に渡してレビューし、指摘後に修正・再検証する。
 - パスはリポジトリルートからの相対パスで扱う。既存の未コミット変更・staged変更を保持し、それらを含めてコミット・破棄せず、`git add -A` は使わない。
 - `src/`、`public/`、`scripts/`、`package.json` は GitHub の公開コードと設定。ブラウザの文字起こしは端末上で扱い、API キーを使う任意機能のキーは localStorage または外部の実行環境で管理し、表示・コピー・Git 登録しない。
 - データや公開設定を変更する前に、現在の状態と README の説明を確認する。削除・公開反映などの外部操作は現在状態、バックアップ、明示的な承認をそろえる。文書作業の依頼はデプロイを承認しない。
