@@ -1,5 +1,31 @@
 # PODCAST LIVE RESEARCH
 
+## 開発者向け入口
+
+ブラウザ内の音声認識と Wikipedia / Wikidata 検索で、ポッドキャスト収録中の話題を調べる公開 Web アプリです。サーバーやデータベースはなく、静的ホスティングで動きます。作業ルールは [AGENTS.md](AGENTS.md) を読みます。
+
+GitHub がコードと設定の共有元です。現在の共有ブランチは `main` です。
+
+```bash
+git clone --branch main https://github.com/m-miyazaki-collab/podcast-live-research.git
+cd podcast-live-research
+```
+
+主な入口は `src/`（React画面、音声認識、話題抽出、Wikipedia/Wikidata連携）、`vite.config.ts`（静的配信設定）、`scripts/deploy.sh`（gh-pages への公開手順）、`package.json`（コマンド）です。文字起こしはブラウザのメモリ上で扱い、キャッシュと任意 AI 機能の設定は端末の localStorage に保存されます。アプリにサーバー、DB、収録音声の永続保存はありません。
+
+初回確認:
+
+```bash
+npm install
+npm run typecheck
+npm run build
+npm run preview
+```
+
+テスト用 script は `package.json` に定義されていません。`npm run deploy` は build 後に公開ブランチへ反映する操作なので、リリースの明示的な承認がある場合だけ実行します。この文書更新ではデプロイしていません。
+
+最新状態は `git log -1 --oneline` と GitHub の [Pull requests](https://github.com/m-miyazaki-collab/podcast-live-research/pulls) / [Issues](https://github.com/m-miyazaki-collab/podcast-live-research/issues) で確認します。
+
 ポッドキャスト収録中の会話を iPad のマイクでリアルタイム認識し、
 いま話しているテーマに関する情報を横のモニターに出し続ける Web アプリ。
 
