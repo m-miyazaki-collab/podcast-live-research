@@ -22,7 +22,7 @@ npm run build
 npm run preview
 ```
 
-テスト用 script は `package.json` に定義されていません。`npm run deploy` は build 後に公開ブランチへ反映する操作なので、リリースの明示的な承認がある場合だけ実行します。この文書更新ではデプロイしていません。
+テスト用 script は `package.json` に定義されていません。`npm run deploy` は build 後に公開ブランチへ反映する操作なので、リリースの明示的な承認がある場合だけ実行します。
 
 最新状態は `git log -1 --oneline` と GitHub の [Pull requests](https://github.com/m-miyazaki-collab/podcast-live-research/pulls) / [Issues](https://github.com/m-miyazaki-collab/podcast-live-research/issues) で確認します。
 
